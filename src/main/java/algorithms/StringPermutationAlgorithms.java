@@ -43,7 +43,7 @@ public class StringPermutationAlgorithms {
     private boolean checkMaxOneOdd(int[] table) {
         boolean foundOdd = false;
         for (int count : table) {
-            if (count % 2 == 1) {
+            if (count% 2 == 1) {
                 if (foundOdd) {
                     return false;
                 }
