@@ -13,8 +13,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONObject;
+import org.springframework.web.client.RestTemplate;
+
 public class Articles {
     private static final String URL_ARTICLE = "https://jsonmock.hackerrank.com/api/articles?";
+    private static final RestTemplate restTemplate = new RestTemplate();
 
     /**
      * the function will accept username and limit values,
@@ -27,11 +31,45 @@ public class Articles {
      * If the title is null, the name of the article is story_title.
      */
     public static void main(String[] args) {
-        Map<Integer, String> map = getArticles("epaga", 10);
+        //using gson and java.net
+       Map<Integer, String> map = getArticles("epaga", 10);
+        //using org.json and RestTemplate
+        //<Integer, String> map = getArticles("epaga", 10);
 
         List<String> list = map.entrySet().stream().sorted(Map.Entry.<Integer, String>comparingByKey().reversed()
                 .thenComparing(Map.Entry.comparingByValue())).limit(10).map(Map.Entry::getValue).toList();
+
         list.forEach(System.out::println);
+    }
+
+    public static Map<Integer, String> getArticlesRestTemplate(final String username, final int limitValues) {
+        int page = 1;
+        int totalPage = 1;
+        Map<Integer, String> map = new HashMap<>();
+        while (map.size() <= limitValues && page <= totalPage) {
+            StringBuilder uri = new StringBuilder("author=").append(username);
+            uri.append("&page=").append(page);
+            try {
+                String response = restTemplate.getForObject(URL_ARTICLE + uri, String.class);
+                org.json.JSONObject jsonObject = new org.json.JSONObject(response);
+                totalPage = jsonObject.getInt("total_pages");
+                org.json.JSONArray array = jsonObject.getJSONArray("data");
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject obj = array.getJSONObject(i);
+                    String title = obj.getString("title");
+                    if (title == null) {
+                        title = obj.getString("story_title");
+                    }
+                    Integer numComments = obj.getInt("num_comments");
+                    map.put(numComments, title);
+                }
+                page++;
+            } catch (Exception e) {
+                System.out.println("Error");
+            }
+
+        }
+        return map;
     }
 
     public static Map<Integer, String> getArticles(final String username, final int limitValues) {
